@@ -7,47 +7,72 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface GameOverDialogProps {
   open: boolean;
   score: number;
+  won: boolean;
+  fakeDoorNumber: number;
+  selectedDoorNumber: number | null;
   onRestart: () => void;
   onExit: () => void;
 }
 
-const GameOverDialog: FC<GameOverDialogProps> = ({ open, score, onRestart, onExit }) => {
+const GameOverDialog: FC<GameOverDialogProps> = ({
+  open,
+  score,
+  won,
+  fakeDoorNumber,
+  selectedDoorNumber,
+  onRestart,
+  onExit,
+}) => {
   return (
     <Dialog open={open}>
-      <DialogContent className="sm:max-w-md bg-[#121729] border-[#E5173F] text-white">
+      <DialogContent className="bg-[#121729] border border-[#3B82F6]/50 text-white">
         <DialogHeader>
-          <DialogTitle className="text-3xl text-center text-[#E5173F]">Игра окончена!</DialogTitle>
-          <DialogDescription className="text-center text-gray-300 text-lg">
-            Вы стали третьим лишним
+          <DialogTitle className="text-2xl font-bold">
+            {won ? 'Victory!' : 'Game Over'}
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">
+            {won 
+              ? "Congratulations! You successfully avoided the fake door."
+              : `You chose door #${selectedDoorNumber !== null ? selectedDoorNumber + 1 : '?'}, but door #${fakeDoorNumber + 1} was the fake one!`
+            }
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="flex flex-col items-center justify-center py-6">
-          <div className="w-32 h-32 rounded-full bg-[#111827] border-4 border-[#E5173F] flex items-center justify-center mb-4">
-            <span className="text-4xl font-bold">{score}</span>
+
+        <div className="py-4">
+          <div className="bg-[#1E3A8A]/30 p-4 rounded-lg mb-4">
+            <p className="text-lg">Final Score: <span className="font-bold text-[#3B82F6]">{score}</span></p>
+            {won && (
+              <p className="text-sm text-gray-400 mt-2">
+                You successfully navigated the entire third floor!
+              </p>
+            )}
+            {!won && (
+              <p className="text-sm text-gray-400 mt-2">
+                Better luck next time. The third floor is tricky.
+              </p>
+            )}
           </div>
-          <p className="text-xl text-gray-300">Ваш результат</p>
         </div>
-        
-        <DialogFooter className="flex flex-col sm:flex-row gap-4">
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-3">
           <Button 
-            variant="outline" 
-            onClick={onExit}
-            className="w-full sm:w-auto border-[#E5173F] text-[#E5173F] hover:bg-[#E5173F] hover:text-white"
+            className="bg-[#3B82F6] hover:bg-[#2563EB] text-white"
+            onClick={onRestart}
           >
-            Выйти
+            Play Again
           </Button>
           <Button 
-            onClick={onRestart}
-            className="w-full sm:w-auto bg-[#E5173F] hover:bg-[#C01435] text-white"
+            variant="outline" 
+            className="border-[#3B82F6]/50 text-white hover:bg-[#3B82F6]/20"
+            onClick={onExit}
           >
-            Играть снова
+            Exit Game
           </Button>
         </DialogFooter>
       </DialogContent>

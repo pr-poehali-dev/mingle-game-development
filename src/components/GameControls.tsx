@@ -1,43 +1,33 @@
 
 import { FC } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 interface GameControlsProps {
-  onMove: (position: number) => void;
+  onNewGame: () => void;
+  remainingDoors: number;
+  score: number;
 }
 
-const GameControls: FC<GameControlsProps> = ({ onMove }) => {
+const GameControls: FC<GameControlsProps> = ({ onNewGame, remainingDoors, score }) => {
   return (
-    <div className="flex justify-center items-center gap-8 mt-6">
-      <div className="grid grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Button
-            key={i}
-            onClick={() => onMove(i)}
-            className="w-16 h-16 bg-[#111827]/80 hover:bg-[#E5173F] text-white text-xl rounded-xl border-2 border-[#E5173F]/50 hover:border-[#E5173F] shadow-[0_0_15px_rgba(229,23,63,0.3)] hover:shadow-[0_0_20px_rgba(229,23,63,0.5)] transition-all"
-          >
-            {i + 1}
-          </Button>
-        ))}
+    <div className="flex justify-between items-center gap-8 mt-6">
+      <div className="flex gap-4">
+        <div className="bg-[#111827]/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white">
+          <span className="text-[#3B82F6] font-bold">Score:</span> {score}
+        </div>
+        <div className="bg-[#111827]/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white">
+          <span className="text-[#3B82F6] font-bold">Doors:</span> {remainingDoors} left
+        </div>
       </div>
       
-      <div className="flex gap-4">
-        <Button
-          variant="outline"
-          className="w-16 h-16 rounded-full bg-[#111827]/80 border-2 border-[#E5173F]/50 hover:border-[#E5173F] text-white"
-          onClick={() => onMove(Math.floor(Math.random() * 6))}
-        >
-          <ArrowLeft className="h-8 w-8" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-16 h-16 rounded-full bg-[#111827]/80 border-2 border-[#E5173F]/50 hover:border-[#E5173F] text-white"
-          onClick={() => onMove(Math.floor(Math.random() * 6))}
-        >
-          <ArrowRight className="h-8 w-8" />
-        </Button>
-      </div>
+      <Button
+        onClick={onNewGame}
+        className="bg-[#111827]/80 hover:bg-[#3B82F6] text-white px-4 py-2 rounded-lg border border-[#3B82F6]/50 hover:border-[#3B82F6] transition-all"
+      >
+        <RefreshCw className="h-5 w-5 mr-2" />
+        New Game
+      </Button>
     </div>
   );
 };

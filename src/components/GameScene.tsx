@@ -1,117 +1,113 @@
 
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface GameSceneProps {
-  playerPosition: number;
+  selectedDoorId: number | null;
   gameStarted: boolean;
   gameOver: boolean;
+  fakeDoorId: number;
+  onDoorSelect: (doorId: number) => void;
 }
 
-const GameScene: FC<GameSceneProps> = ({ playerPosition, gameStarted, gameOver }) => {
-  const sceneRef = useRef<HTMLDivElement>(null);
+const GameScene: FC<GameSceneProps> = ({ 
+  selectedDoorId, 
+  gameStarted, 
+  gameOver, 
+  fakeDoorId,
+  onDoorSelect
+}) => {
+  const [doorHighlight, setDoorHighlight] = useState<number | null>(null);
   
-  // Характеристики NPC игроков
-  const npcs = [
-    { id: 1, position: 0, speed: 1.2 },
-    { id: 2, position: 2, speed: 0.8 },
-    { id: 3, position: 3, speed: 1.5 },
-    { id: 4, position: 4, speed: 0.9 },
-    { id: 5, position: 5, speed: 1.1 },
-  ];
+  // Generate doors layout (5 rows x 6 columns = 30 doors)
+  const doorRows = 5;
+  const doorColumns = 6;
   
   useEffect(() => {
-    if (!gameStarted || gameOver) return;
-    
-    const interval = setInterval(() => {
-      // Анимация перемещения NPC
-      const npcsElements = document.querySelectorAll('.npc');
-      npcsElements.forEach((npc) => {
-        const randomMove = Math.floor(Math.random() * 6);
-        npc.setAttribute('data-position', randomMove.toString());
-      });
-    }, 2000);
-    
-    return () => clearInterval(interval);
-  }, [gameStarted, gameOver]);
+    if (gameOver) {
+      // Highlight the fake door when game is over
+      setDoorHighlight(fakeDoorId);
+    } else {
+      setDoorHighlight(null);
+    }
+  }, [gameOver, fakeDoorId]);
 
   return (
     <div 
-      ref={sceneRef}
       className={cn(
-        "relative w-full h-full bg-gradient-to-b from-[#121729] to-[#090B13] perspective-1000 overflow-hidden",
-        gameOver && "opacity-50 transition-opacity duration-500"
+        "relative w-full h-full bg-[url('https://images.unsplash.com/photo-1564005213682-502e5d2c700b?q=80&w=2000')] bg-cover bg-center",
+        gameOver && "opacity-70 transition-opacity duration-500"
       )}
     >
-      {/* 3D пол с сеткой */}
-      <div className="absolute bottom-0 left-0 w-full h-[80%] bg-[url('https://images.unsplash.com/photo-1595113316349-9fa4eb10f6b7?q=80&w=2000')] bg-cover bg-center origin-bottom transform-style-3d rotate-x-[70deg] scale-y-[2] opacity-40">
-        <div className="absolute inset-0 grid grid-cols-6 grid-rows-6">
-          {Array.from({ length: 36 }).map((_, i) => (
-            <div key={i} className="border border-[#E5173F]/30"></div>
-          ))}
+      {/* Corridor overlay effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#090B13]/70 to-[#090B13]/30"></div>
+      
+      {/* Floor texture */}
+      <div className="absolute bottom-0 left-0 w-full h-[30%] bg-[url('https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?q=80&w=2000')] bg-cover opacity-60">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#090B13] to-transparent"></div>
+      </div>
+      
+      {/* Room number sign */}
+      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-[#111827]/80 backdrop-blur-sm px-6 py-3 rounded-lg text-white border border-[#3B82F6]/50">
+        <h2 className="text-2xl font-bold">Floor 3</h2>
+      </div>
+      
+      {/* Door grid */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="grid grid-cols-6 gap-3 p-4 max-w-5xl w-full">
+          {Array.from({ length: doorRows * doorColumns }).map((_, index) => {
+            const isDoorSelected = selectedDoorId === index;
+            const isFakeDoor = fakeDoorId === index;
+            const isHighlighted = doorHighlight === index;
+            
+            return (
+              <button
+                key={index}
+                disabled={gameOver || !gameStarted || isDoorSelected}
+                onClick={() => onDoorSelect(index)}
+                className={cn(
+                  "relative h-24 transition-all duration-300 transform hover:scale-105 focus:outline-none",
+                  isDoorSelected && !gameOver && "scale-110 z-10",
+                  isHighlighted && isFakeDoor && "ring-4 ring-red-500 scale-110 z-10",
+                  isHighlighted && !isFakeDoor && "ring-4 ring-green-500 scale-110 z-10"
+                )}
+              >
+                {/* Door frame */}
+                <div className={cn(
+                  "absolute inset-0 rounded-lg border-2",
+                  isDoorSelected || isHighlighted ? "border-white" : "border-[#3B82F6]/50",
+                  isHighlighted && isFakeDoor && "border-red-500",
+                  isHighlighted && !isFakeDoor && "border-green-500"
+                )}></div>
+                
+                {/* Door */}
+                <div className={cn(
+                  "absolute inset-0 bg-[#1E3A8A] rounded-lg shadow-md flex items-center justify-center transition-colors",
+                  isDoorSelected && !gameOver && "bg-[#3B82F6]",
+                  isHighlighted && isFakeDoor && "bg-red-900",
+                  isHighlighted && !isFakeDoor && "bg-green-800"
+                )}>
+                  {/* Door number */}
+                  <span className="text-white font-bold">{index + 1}</span>
+                  
+                  {/* Door handle */}
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-6 bg-[#FCD34D] rounded-sm"></div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
       
-      {/* Круглая арена */}
-      <div className="absolute bottom-[20%] left-1/2 transform -translate-x-1/2 w-[80vw] h-[40vh] max-w-4xl rounded-full border-4 border-[#E5173F] opacity-60 blur-[1px]"></div>
-      
-      {/* Позиции для игроков */}
-      <div className="absolute bottom-[25%] left-0 w-full flex justify-around">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div 
-            key={i} 
-            className={cn(
-              "w-24 h-24 rounded-full border-2 border-dashed border-white/50",
-              playerPosition === i && "border-[#E5173F] border-solid bg-[#E5173F]/20"
-            )}
-          ></div>
-        ))}
-      </div>
-      
-      {/* Персонаж игрока */}
-      <div 
-        className={cn(
-          "absolute bottom-[28%] left-0 w-16 h-40 transition-all duration-300 ease-out transform-gpu z-10",
-          `left-[calc(${(playerPosition / 5) * 85 + 7.5}%)]`
-        )}
-      >
-        <div className="w-full h-full relative">
-          <div className="absolute bottom-0 w-full h-3/4 bg-[#39FF14] rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.6)]"></div>
-          <div className="absolute bottom-[75%] left-1/2 transform -translate-x-1/2 w-12 h-12 bg-[#39FF14] rounded-full shadow-[0_0_15px_rgba(57,255,20,0.6)]">
-            <div className="absolute inset-2 bg-black rounded-full"></div>
-          </div>
-          <div className="absolute bottom-[30%] w-full text-center text-white text-xs font-bold">ВЫ</div>
+      {/* Instructions overlay when not started */}
+      {!gameStarted && !gameOver && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#090B13]/80 backdrop-blur-sm">
+          <h1 className="text-4xl font-bold text-white mb-6">The Third Floor</h1>
+          <p className="text-xl text-gray-300 max-w-md text-center mb-8">
+            Choose carefully among the 30 doors. One of them is fake and will end your game!
+          </p>
         </div>
-      </div>
-      
-      {/* NPC игроки */}
-      {npcs.map((npc) => (
-        <div 
-          key={npc.id}
-          className={cn(
-            "npc absolute bottom-[28%] left-0 w-16 h-40 transition-all duration-300 ease-out transform-gpu",
-            `left-[calc(${(npc.position / 5) * 85 + 7.5}%)]`
-          )}
-          data-position={npc.position}
-          style={{ transitionDuration: `${0.3 / npc.speed}s` }}
-        >
-          <div className="w-full h-full relative">
-            <div className="absolute bottom-0 w-full h-3/4 bg-[#E5173F] rounded-lg shadow-[0_0_15px_rgba(229,23,63,0.6)]"></div>
-            <div className="absolute bottom-[75%] left-1/2 transform -translate-x-1/2 w-12 h-12 bg-[#E5173F] rounded-full shadow-[0_0_15px_rgba(229,23,63,0.6)]">
-              <div className="absolute inset-2 bg-black rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      ))}
-      
-      {/* Эффект освещения сверху */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[60%] h-[40%] bg-[#E5173F]/20 blur-[50px] rounded-full"></div>
-      
-      {/* Передний план - стражники */}
-      <div className="absolute bottom-0 left-0 w-full h-[20%] flex justify-between px-10">
-        <div className="w-20 h-full bg-[url('https://images.unsplash.com/photo-1590095893307-2b2b10cb7e3b?q=80&w=500')] bg-cover bg-top opacity-70"></div>
-        <div className="w-20 h-full bg-[url('https://images.unsplash.com/photo-1590095893307-2b2b10cb7e3b?q=80&w=500')] bg-cover bg-top opacity-70 transform scale-x-[-1]"></div>
-      </div>
+      )}
     </div>
   );
 };
